@@ -1,0 +1,50 @@
+classDiagram
+    direction TB
+
+class City {
+ - id: int 
+ - name: String
+}
+
+    class Fab {
+        -id : int
+        - city_id: int
+        -name : char[]
+    }
+
+    class ParkingLot {
+        -id : int
+        -name : char[]
+        -regularTotal : int
+        -regularRemain : int
+        -flexibleTotal : int
+        -flexibleRemain : int
+        -allTotal : int
+        -allRemain : int
+    }
+
+    class Zone {
+        -id : int
+        -floor : String
+        -name : int
+        -regularTotal : int
+        -regularRemain : int
+        -flexibleTotal : int
+        -flexibleRemain : int
+        -allTotal : int
+        -allRemain : int
+        -color : int
+        -note : int
+    }
+
+    class LayoutPlan {
+        -id : int
+        -name : String
+        -imageURL : int
+    }
+
+    %% 關聯性與 Multiplicity 定義
+City "1" -- "0..*" Fab
+    Fab "1" -- "0..*" ParkingLot
+    ParkingLot "1" -- "0..*" Zone
+    ParkingLot "1" -- "0..*" LayoutPlan
