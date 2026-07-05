@@ -2,15 +2,14 @@ package com.pms.application.parkinglot.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class CreateZoneRequest {
 
     @NotBlank(message = "floor must not be blank")
     private String floor;
 
-    @NotNull(message = "name must not be null")
-    private Integer name;
+    @NotBlank(message = "name must not be blank")
+    private String name;
 
     @Min(value = 0, message = "regularTotal must not be negative")
     private int regularTotal;
@@ -30,11 +29,11 @@ public class CreateZoneRequest {
         this.floor = floor;
     }
 
-    public Integer getName() {
+    public String getName() {
         return name;
     }
 
-    public void setName(Integer name) {
+    public void setName(String name) {
         this.name = name;
     }
 

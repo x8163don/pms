@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -17,15 +19,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the create_city decision table in src/test/resources/create_city/decision-table.md.
+ * Covers the create_city decision table in src/test/resources/create_city/decision-table.md,
+ * and the delete_city decision table in src/test/resources/delete_city/decision-table.md.
  *
- * Rules 2, 4, 5, 7, 8 exercise the name-uniqueness/trim/length rules, which are
+ * Rules 2, 4, 5, 7, 8 of create_city exercise the name-uniqueness/trim/length rules, which are
  * NOT YET implemented in CityUseCaseImpl/City — those tests are expected to fail
  * (red) until that logic is added. Rules 1 and 3 already pass today.
  *
  * Rule 6 (empty city table) is not representable at this mock level — it's
  * indistinguishable from Rule 1 here and belongs in a Repository-level
  * integration test instead (see decision-table.md).
+ *
+ * delete_city's business logic is already implemented in CityUseCaseImpl.deleteCity — those
+ * tests are regression coverage and are expected to pass immediately (green).
  */
 @ExtendWith(MockitoExtension.class)
 class CityUseCaseImplTest {
@@ -132,5 +138,43 @@ class CityUseCaseImplTest {
 
         verify(cityRepository, never()).existsByName(anyString());
         verify(cityRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("delete_city Rule 1: non-existent id fails")
+    void deleteCity_withNonExistentId_throwsCityNotFoundException() {
+        cityUseCaseImpl = newUseCase();
+        when(cityRepository.getById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cityUseCaseImpl.deleteCity(999L))
+                .isInstanceOf(CityNotFoundException.class);
+
+        verify(fabRepository, never()).existsByCityId(any());
+        verify(cityRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("delete_city Rule 2: existing city with no Fabs succeeds")
+    void deleteCity_withNoFabs_succeeds() {
+        cityUseCaseImpl = newUseCase();
+        when(cityRepository.getById(1L)).thenReturn(Optional.of(new City(1L, "Taipei")));
+        when(fabRepository.existsByCityId(1L)).thenReturn(false);
+
+        cityUseCaseImpl.deleteCity(1L);
+
+        verify(cityRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("delete_city Rule 3: existing city with Fabs fails")
+    void deleteCity_withExistingFabs_throwsCityInUseException() {
+        cityUseCaseImpl = newUseCase();
+        when(cityRepository.getById(1L)).thenReturn(Optional.of(new City(1L, "Taipei")));
+        when(fabRepository.existsByCityId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> cityUseCaseImpl.deleteCity(1L))
+                .isInstanceOf(CityInUseException.class);
+
+        verify(cityRepository, never()).deleteById(any());
     }
 }

@@ -9,7 +9,7 @@ import java.util.Objects;
 public class Zone {
     private final Long id;
     private String floor;
-    private int name;
+    private String name;
     private final int regularTotal;
     private int regularRemain;
     private final int flexibleTotal;
@@ -18,16 +18,16 @@ public class Zone {
     private int note;
 
     /** Creation constructor — remain counts start out equal to the total counts. */
-    public Zone(String floor, int name, int regularTotal, int flexibleTotal, int color, int note) {
+    public Zone(String floor, String name, int regularTotal, int flexibleTotal, int color, int note) {
         this(null, floor, name, regularTotal, regularTotal, flexibleTotal, flexibleTotal, color, note);
     }
 
     /** Reconstruction constructor — used to rebuild an existing record from storage. */
-    public Zone(Long id, String floor, int name, int regularTotal, int regularRemain,
+    public Zone(Long id, String floor, String name, int regularTotal, int regularRemain,
                 int flexibleTotal, int flexibleRemain, int color, int note) {
         this.id = id;
         this.floor = validateFloor(floor);
-        this.name = name;
+        this.name = validateName(name);
         this.regularTotal = validateNonNegative(regularTotal, "regularTotal");
         this.regularRemain = validateNonNegative(regularRemain, "regularRemain");
         this.flexibleTotal = validateNonNegative(flexibleTotal, "flexibleTotal");
@@ -42,6 +42,14 @@ public class Zone {
             throw new IllegalArgumentException("Zone floor cannot be blank");
         }
         return floor;
+    }
+
+    private String validateName(String name) {
+        Objects.requireNonNull(name, "Zone name cannot be null");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Zone name cannot be blank");
+        }
+        return name;
     }
 
     private int validateNonNegative(int value, String field) {
@@ -67,7 +75,7 @@ public class Zone {
         return floor;
     }
 
-    public int getName() {
+    public String getName() {
         return name;
     }
 

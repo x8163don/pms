@@ -57,7 +57,7 @@ public class ParkingLot {
     }
 
     /** Adds a new Zone to this aggregate; returns the created Zone (not yet persisted). */
-    public Zone addZone(String floor, int name, int regularTotal, int flexibleTotal, int color, int note) {
+    public Zone addZone(String floor, String name, int regularTotal, int flexibleTotal, int color, int note) {
         Zone zone = new Zone(floor, name, regularTotal, flexibleTotal, color, note);
         zones.add(zone);
         return zone;

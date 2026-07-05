@@ -1,6 +1,7 @@
 package com.pms.usecase.parkinglot;
 
 import com.pms.domain.parkinglot.ParkingLot;
+import com.pms.domain.parkinglot.Zone;
 import com.pms.usecase.fab.FabNotFoundException;
 import com.pms.usecase.fab.FabRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * Covers the create_parking_lot decision table in
- * src/test/resources/create_parking_lot/decision-table.md.
+ * src/test/resources/create_parking_lot/decision-table.md, and the delete_parking_lot decision
+ * table in src/test/resources/delete_parking_lot/decision-table.md.
  *
  * Decision table 1 (fabId existence) is already implemented in ParkingLotUseCaseImpl today.
  *
@@ -40,7 +42,13 @@ import static org.mockito.Mockito.when;
  *
  * Per the confirmed aggregate rule, ParkingLot's regularTotal/flexibleTotal are informational
  * only and are never cross-validated against its Zones' totals, so addZone/removeZone are out
- * of scope for this decision table.
+ * of scope for the create decision table.
+ *
+ * delete_parking_lot's business logic is already implemented in
+ * ParkingLotUseCaseImpl.deleteParkingLot — those tests are regression coverage and are expected
+ * to pass immediately (green). Unlike delete_city/delete_fab, the "has children" check reads
+ * directly from the already-loaded aggregate's `zones` list rather than a separate Repository
+ * existsBy query, since Zone has no independent Repository.
  */
 @ExtendWith(MockitoExtension.class)
 class ParkingLotUseCaseImplTest {
@@ -228,5 +236,42 @@ class ParkingLotUseCaseImplTest {
         assertThat(result.getRegularTotal()).isZero();
         assertThat(result.getFlexibleTotal()).isZero();
         assertThat(result.getZones()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("delete_parking_lot Rule 1: non-existent id fails")
+    void deleteParkingLot_withNonExistentId_throwsParkingLotNotFoundException() {
+        ParkingLotUseCaseImpl useCase = newUseCase();
+        when(parkingLotRepository.getById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> useCase.deleteParkingLot(999L))
+                .isInstanceOf(ParkingLotNotFoundException.class);
+
+        verify(parkingLotRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("delete_parking_lot Rule 2: existing ParkingLot with no Zones succeeds")
+    void deleteParkingLot_withNoZones_succeeds() {
+        ParkingLotUseCaseImpl useCase = newUseCase();
+        when(parkingLotRepository.getById(1L)).thenReturn(Optional.of(savedParkingLot(1L, 1L, "B1", 10, 5)));
+
+        useCase.deleteParkingLot(1L);
+
+        verify(parkingLotRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("delete_parking_lot Rule 3: existing ParkingLot with Zones fails")
+    void deleteParkingLot_withExistingZones_throwsParkingLotInUseException() {
+        ParkingLotUseCaseImpl useCase = newUseCase();
+        Zone zone = new Zone("1F", "A", 10, 5, 0, 0);
+        ParkingLot lotWithZone = new ParkingLot(1L, 1L, "B1", 10, 10, 5, 5, List.of(zone));
+        when(parkingLotRepository.getById(1L)).thenReturn(Optional.of(lotWithZone));
+
+        assertThatThrownBy(() -> useCase.deleteParkingLot(1L))
+                .isInstanceOf(ParkingLotInUseException.class);
+
+        verify(parkingLotRepository, never()).deleteById(any());
     }
 }

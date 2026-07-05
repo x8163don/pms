@@ -7,7 +7,7 @@ public class ZoneResponse {
     private final Long id;
     private final Long lotId;
     private final String floor;
-    private final int name;
+    private final String name;
     private final int regularTotal;
     private final int regularRemain;
     private final int flexibleTotal;
@@ -44,7 +44,7 @@ public class ZoneResponse {
         return floor;
     }
 
-    public int getName() {
+    public String getName() {
         return name;
     }
 

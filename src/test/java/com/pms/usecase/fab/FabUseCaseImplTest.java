@@ -21,7 +21,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the create_fab decision table in src/test/resources/create_fab/decision-table.md.
+ * Covers the create_fab decision table in src/test/resources/create_fab/decision-table.md,
+ * and the delete_fab decision table in src/test/resources/delete_fab/decision-table.md.
  *
  * Decision table 1 (cityId existence) is already implemented in FabUseCaseImpl today.
  *
@@ -33,6 +34,9 @@ import static org.mockito.Mockito.when;
  * Rule 6 (empty Fab table) is not representable at this mock level — it's indistinguishable
  * from Rule 1 here and belongs in a Repository-level integration test instead (see
  * decision-table.md).
+ *
+ * delete_fab's business logic is already implemented in FabUseCaseImpl.deleteFab — those tests
+ * are regression coverage and are expected to pass immediately (green).
  */
 @ExtendWith(MockitoExtension.class)
 class FabUseCaseImplTest {
@@ -166,7 +170,49 @@ class FabUseCaseImplTest {
         verify(fabRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("delete_fab Rule 1: non-existent id fails")
+    void deleteFab_withNonExistentId_throwsFabNotFoundException() {
+        FabUseCaseImpl fabUseCaseImpl = newUseCase();
+        when(fabRepository.getById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> fabUseCaseImpl.deleteFab(999L))
+                .isInstanceOf(FabNotFoundException.class);
+
+        verify(parkingLotRepository, never()).existsByFabId(any());
+        verify(fabRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("delete_fab Rule 2: existing fab with no ParkingLots succeeds")
+    void deleteFab_withNoParkingLots_succeeds() {
+        FabUseCaseImpl fabUseCaseImpl = newUseCase();
+        when(fabRepository.getById(1L)).thenReturn(Optional.of(mockFab(1L)));
+        when(parkingLotRepository.existsByFabId(1L)).thenReturn(false);
+
+        fabUseCaseImpl.deleteFab(1L);
+
+        verify(fabRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("delete_fab Rule 3: existing fab with ParkingLots fails")
+    void deleteFab_withExistingParkingLots_throwsFabInUseException() {
+        FabUseCaseImpl fabUseCaseImpl = newUseCase();
+        when(fabRepository.getById(1L)).thenReturn(Optional.of(mockFab(1L)));
+        when(parkingLotRepository.existsByFabId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> fabUseCaseImpl.deleteFab(1L))
+                .isInstanceOf(FabInUseException.class);
+
+        verify(fabRepository, never()).deleteById(any());
+    }
+
     private com.pms.domain.city.City mockCity(Long id) {
         return new com.pms.domain.city.City(id, "Taipei");
+    }
+
+    private Fab mockFab(Long id) {
+        return new Fab(id, 1L, "1F-A");
     }
 }

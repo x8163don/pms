@@ -8,7 +8,7 @@ public interface ParkingLotUseCase {
 
     void deleteParkingLot(Long id);
 
-    Zone addZone(Long lotId, String floor, int name, int regularTotal, int flexibleTotal, int color, int note);
+    Zone addZone(Long lotId, String floor, String name, int regularTotal, int flexibleTotal, int color, int note);
 
     void removeZone(Long lotId, Long zoneId);
 }

@@ -23,7 +23,7 @@ public class ZoneDto {
     private String floor;
 
     @Column(name = "name", nullable = false)
-    private int name;
+    private String name;
 
     @Column(name = "regular_total", nullable = false)
     private int regularTotal;
@@ -65,11 +65,11 @@ public class ZoneDto {
         this.floor = floor;
     }
 
-    public int getName() {
+    public String getName() {
         return name;
     }
 
-    public void setName(int name) {
+    public void setName(String name) {
         this.name = name;
     }
 

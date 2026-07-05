@@ -46,7 +46,7 @@ public class ParkingLotUseCaseImpl implements ParkingLotUseCase {
 
     @Override
     @Transactional
-    public Zone addZone(Long lotId, String floor, int name, int regularTotal, int flexibleTotal,
+    public Zone addZone(Long lotId, String floor, String name, int regularTotal, int flexibleTotal,
                          int color, int note) {
         ParkingLot parkingLot = parkingLotRepository.getById(lotId)
                 .orElseThrow(() -> new ParkingLotNotFoundException("ParkingLot not found for ID: " + lotId));
