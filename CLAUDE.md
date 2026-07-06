@@ -27,5 +27,7 @@ No global `mvn` on this machine — always use the wrapper:
 
 ## Database
 
-- Dev/test: in-memory H2 (`src/main/resources/application.properties`, `spring.jpa.hibernate.ddl-auto=update`).
-- Production target: MariaDB — not yet wired up (no driver dependency or datasource config exists yet).
+- Dev/unit tests: in-memory H2 (`src/main/resources/application.properties`, `spring.jpa.hibernate.ddl-auto=update`). `CityUseCaseImplTest`/`FabUseCaseImplTest`/`ParkingLotUseCaseImplTest` are pure Mockito unit tests and never touch a database at all.
+- `PmsApplicationTests` (`@SpringBootTest`) verifies against a real MariaDB via Testcontainers instead of H2: `TestcontainersConfiguration` registers a `MariaDBContainer` `@Bean` with `@ServiceConnection`, which Spring Boot auto-wires as the datasource — no manual `@DynamicPropertySource` needed.
+- Requires Docker running locally. On Colima, the Ryuk reaper container can't bind-mount Colima's `docker.sock`, so `pom.xml`'s `maven-surefire-plugin` sets `TESTCONTAINERS_RYUK_DISABLED=true` for test runs — Testcontainers still cleans up containers via JVM shutdown hooks.
+- Production target: MariaDB — the driver (`org.mariadb.jdbc:mariadb-java-client`) is currently `test`-scope only (for the Testcontainers verification above); production datasource config still isn't wired up.
